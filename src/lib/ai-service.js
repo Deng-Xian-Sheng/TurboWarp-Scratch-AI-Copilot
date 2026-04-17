@@ -102,13 +102,14 @@ export async function chat (messages, config) {
     ];
 
     let fetchUrl;
-    if (process.env.NODE_ENV !== 'production' && config.baseUrl === 'https://coding.dashscope.aliyuncs.com/v1') {
-        // Development: use webpack dev server proxy
-        fetchUrl = `${config.baseUrl}/chat/completions`;
-    } else {
-        // Production: use CORS proxy to bypass CORS restrictions
+    if (config.baseUrl.includes('dashscope.aliyuncs.com')) {
+        // DashScope: use CORS proxy to bypass browser CORS restrictions
+        // Works for both development and production builds
         const targetUrl = `${config.baseUrl}/chat/completions`;
         fetchUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+    } else {
+        // Custom API endpoint: call directly
+        fetchUrl = `${config.baseUrl}/chat/completions`;
     }
 
     const response = await fetch(fetchUrl, {
