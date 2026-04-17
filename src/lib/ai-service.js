@@ -116,6 +116,12 @@ export async function chat (messages, config, options = {}) {
         fetchUrl = fetchUrl.replace(/\/+$/, '') + '/chat/completions';
     }
 
+    // In development, proxy all API requests through webpack-dev-server to avoid CORS
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (isDev) {
+        fetchUrl = `/api/ai/${encodeURIComponent(fetchUrl)}`;
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 

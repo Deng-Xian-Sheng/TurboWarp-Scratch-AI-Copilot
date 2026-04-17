@@ -37,15 +37,55 @@ const base = {
         disableHostCheck: true,
         compress: true,
         port: process.env.PORT || 8601,
-        // Redirect root path to editor for local development convenience
-        before(app) {
+        // Proxy AI API requests to bypass CORS during development
+        before(app, server) {
+            const https = require('https');
+
+            // Redirect root path to editor for local development convenience
             app.get('/', (req, res) => {
                 res.redirect('/editor.html');
             });
+
+            // Raw HTTPS proxy for AI API - forwards request body directly via pipe
+            app.all('/api/ai/*', (req, res) => {
+                const pathPart = req.originalUrl.replace(/^\/api\/ai\//, '').split('?')[0];
+                try {
+                    const targetUrl = decodeURIComponent(pathPart).replace(/\/$/, '');
+                    const parsedTarget = new URL(targetUrl);
+
+                    const proxyReq = https.request({
+                        hostname: parsedTarget.hostname,
+                        port: parsedTarget.port || 443,
+                        path: parsedTarget.pathname + parsedTarget.search,
+                        method: req.method,
+                        headers: {
+                            ...req.headers,
+                            host: parsedTarget.host
+                        },
+                        rejectUnauthorized: true
+                    }, (proxyRes) => {
+                        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+                        proxyRes.pipe(res);
+                    });
+
+                    proxyReq.on('error', (err) => {
+                        if (!res.headersSent) {
+                            res.writeHead(500, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ error: err.message }));
+                        }
+                    });
+
+                    req.pipe(proxyReq);
+                } catch (e) {
+                    res.status(400).json({ error: e.message });
+                }
+            });
         },
-        // allows ROUTING_STYLE=wildcard to work properly
+        // Skip historyApiFallback for API proxy paths
         historyApiFallback: {
+            disableDotRule: true,
             rewrites: [
+                {from: /^\/api\/ai\//, to: (context) => context.parsedUrl.pathname},
                 {from: /^\/\d+\/?$/, to: '/index.html'},
                 {from: /^\/\d+\/fullscreen\/?$/, to: '/fullscreen.html'},
                 {from: /^\/\d+\/editor\/?$/, to: '/editor.html'},
@@ -53,15 +93,6 @@ const base = {
                 {from: /^\/addons\/?$/, to: '/addons.html'}
             ]
         },
-        // Proxy for AI API requests to bypass CORS
-        proxy: {
-            '/api/ai': {
-                target: 'https://coding.dashscope.aliyuncs.com/v1',
-                changeOrigin: true,
-                pathRewrite: { '^/api/ai': '' },
-                secure: true
-            }
-        }
     },
     output: {
         library: 'GUI',
