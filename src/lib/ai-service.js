@@ -1,6 +1,10 @@
 import log from './log.js';
 import {getWorkspace} from './workspace-registry.js';
 
+const DEFAULT_BASE_URL = 'https://gen.pollinations.ai/v1/chat/completions';
+const DEFAULT_MODEL = 'openai';
+const REQUEST_TIMEOUT_MS = 120_000;
+
 /**
  * Insert Scratch blocks tool definition.
  */
@@ -89,92 +93,157 @@ function parseXmlBlocks (xmlString) {
 }
 
 /**
- * Send a chat message to the AI API using tool calling.
+ * Send a chat message to an OpenAI-compatible API with SSE streaming.
  * Supports tool call loop for auto-insertion.
  * @param {Array<object>} messages - Array of {role, content, name?, tool_call_id?, tool_calls?} messages
  * @param {object} config - API config: {baseUrl, apiKey, model}
- * @returns {Promise<{text: string, xmlBlocks: string|null, toolUsed: string|null}>}
+ * @param {object} [options] - Optional: {onChunk: (text, reasoning) => void} for streaming callbacks
+ * @returns {Promise<{text: string, xmlBlocks: string|null, toolUsed: string|null, reasoning: string}>}
  */
-export async function chat (messages, config) {
+export async function chat (messages, config, options = {}) {
     const allMessages = [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages
     ];
 
-    let fetchUrl;
-    if (config.baseUrl.includes('dashscope.aliyuncs.com')) {
-        // DashScope: use CORS proxy to bypass browser CORS restrictions
-        // Works for both development and production builds
-        const targetUrl = `${config.baseUrl}/chat/completions`;
-        fetchUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-    } else {
-        // Custom API endpoint: call directly
-        fetchUrl = `${config.baseUrl}/chat/completions`;
+    const baseUrl = (config && config.baseUrl) || DEFAULT_BASE_URL;
+    const model = (config && config.model) || DEFAULT_MODEL;
+    const apiKey = (config && config.apiKey) || '';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (apiKey) {
+        headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
-    const response = await fetch(fetchUrl, {
-        method: 'POST',
-        cache: 'no-store',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`
-        },
-        body: JSON.stringify({
-            model: config.model,
-            messages: allMessages,
-            tools: [INSERT_BLOCKS_TOOL, DELETE_BLOCKS_TOOL],
-            tool_choice: 'auto',
-            stream: false
-        })
-    });
+    try {
+        const response = await fetch(baseUrl, {
+            method: 'POST',
+            cache: 'no-store',
+            headers,
+            body: JSON.stringify({
+                model,
+                messages: allMessages,
+                tools: [INSERT_BLOCKS_TOOL, DELETE_BLOCKS_TOOL],
+                tool_choice: 'auto',
+                stream: true
+            }),
+            signal: controller.signal
+        });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`AI API error: ${response.status} ${errorText}`);
-    }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`AI API error: ${response.status} ${errorText}`);
+        }
 
-    const data = await response.json();
+        // Parse SSE stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullText = '';
+        let reasoning = '';
+        let toolCalls = null;
 
-    if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
-        throw new Error('AI API returned an empty or malformed response (no choices)');
-    }
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-    const choice = data.choices[0];
-    if (!choice.message) {
-        throw new Error('AI API returned a malformed response (no message)');
-    }
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
 
-    const message = choice.message;
-    let result = { text: '', xmlBlocks: null, toolUsed: null };
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const data = line.slice(6).trim();
+                if (data === '[DONE]') continue;
 
-    // Check if the model called a tool
-    if (message.tool_calls && message.tool_calls.length > 0) {
-        const toolCall = message.tool_calls[0];
-        if (toolCall.function) {
-            result.toolUsed = toolCall.function.name;
+                try {
+                    const parsed = JSON.parse(data);
+                    const choice = parsed.choices?.[0];
+                    if (!choice) continue;
 
-            if (toolCall.function.name === 'insertScratchBlocks') {
-                const args = JSON.parse(toolCall.function.arguments);
-                result.text = args.explanation || '';
-                result.xmlBlocks = args.xml || null;
-            } else if (toolCall.function.name === 'deleteScratchBlocks') {
-                const args = JSON.parse(toolCall.function.arguments);
-                result.text = args.confirmation || '';
-                // Execute deletion directly
-                const deletedCount = deleteAllBlocks();
-                result.text = args.confirmation || `Deleted ${deletedCount} blocks from the canvas.`;
+                    const delta = choice.delta;
+                    if (!delta) continue;
+
+                    // Accumulate reasoning content (chain of thought)
+                    if (delta.reasoning_content) {
+                        reasoning += delta.reasoning_content;
+                    }
+
+                    // Accumulate text content
+                    if (delta.content) {
+                        fullText += delta.content;
+                    }
+
+                    // Accumulate tool calls (streaming format with index)
+                    if (delta.tool_calls) {
+                        if (!toolCalls) toolCalls = [];
+                        for (const tc of delta.tool_calls) {
+                            if (tc.index !== undefined) {
+                                if (!toolCalls[tc.index]) {
+                                    toolCalls[tc.index] = { id: '', type: 'function', function: { name: '', arguments: '' } };
+                                }
+                                const existing = toolCalls[tc.index];
+                                if (tc.id) existing.id += tc.id;
+                                if (tc.function?.name) existing.function.name += tc.function.name;
+                                if (tc.function?.arguments) existing.function.arguments += tc.function.arguments;
+                            }
+                        }
+                    }
+
+                    // Streaming callback
+                    if (options.onChunk) {
+                        options.onChunk(fullText, reasoning);
+                    }
+                } catch (parseErr) {
+                    // skip malformed SSE lines
+                }
             }
         }
-    } else if (typeof message.content === 'string') {
-        // Fallback: model returned plain text
-        result.text = message.content;
-        const xmlMatch = message.content.match(/```(?:xml)?\s*<xml[\s\S]*?<\/xml>\s*```/);
-        if (xmlMatch) {
-            result.xmlBlocks = xmlMatch[0];
-        }
-    }
 
-    return result;
+        clearTimeout(timeout);
+
+        let result = { text: fullText, xmlBlocks: null, toolUsed: null, reasoning };
+
+        // Process tool calls
+        if (toolCalls && toolCalls.length > 0) {
+            const toolCall = toolCalls[0];
+            if (toolCall.function) {
+                result.toolUsed = toolCall.function.name;
+
+                if (toolCall.function.name === 'insertScratchBlocks') {
+                    try {
+                        const args = JSON.parse(toolCall.function.arguments);
+                        result.text = args.explanation || fullText;
+                        result.xmlBlocks = args.xml || null;
+                    } catch (e) {
+                        result.text = fullText;
+                    }
+                } else if (toolCall.function.name === 'deleteScratchBlocks') {
+                    const deletedCount = deleteAllBlocks();
+                    result.text = `Deleted ${deletedCount} blocks from the canvas.`;
+                }
+            }
+        } else if (fullText) {
+            // Fallback: check for XML in plain text
+            const xmlMatch = fullText.match(/```(?:xml)?\s*<xml[\s\S]*?<\/xml>\s*```/);
+            if (xmlMatch) {
+                result.xmlBlocks = xmlMatch[0];
+            }
+        }
+
+        return result;
+    } catch (err) {
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') {
+            throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`);
+        }
+        throw err;
+    }
 }
 
 /**

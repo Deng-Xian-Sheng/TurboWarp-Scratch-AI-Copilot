@@ -7,14 +7,15 @@ const LOAD_CONFIG = 'LOAD_CONFIG';
 const SAVE_CONFIG = 'SAVE_CONFIG';
 const LOAD_HISTORY = 'LOAD_HISTORY';
 const SAVE_HISTORY = 'SAVE_HISTORY';
+const SET_STREAMING = 'SET_STREAMING';
 
 const STORAGE_KEY_CONFIG = 'scratch_ai_config';
 const STORAGE_KEY_HISTORY = 'scratch_ai_history';
 
 const defaultConfig = {
-    baseUrl: 'https://coding.dashscope.aliyuncs.com/v1',
-    apiKey: '',
-    model: 'qwen3.6-plus'
+    baseUrl: 'https://gen.pollinations.ai/v1/chat/completions',
+    apiKey: 'pk_bGI1EqrORBqMbopD',
+    model: 'openai'
 };
 
 function loadConfig () {
@@ -49,7 +50,9 @@ const initialState = {
     messages: savedHistory,
     loading: false,
     error: null,
-    config: savedConfig
+    config: savedConfig,
+    streamingText: '',
+    streamingReasoning: ''
 };
 
 const aiPanelReducer = (state = initialState, action) => {
@@ -74,6 +77,12 @@ const aiPanelReducer = (state = initialState, action) => {
         persistConfig(config);
         return { ...state, config };
     }
+    case SET_STREAMING:
+        return {
+            ...state,
+            streamingText: action.text || '',
+            streamingReasoning: action.reasoning || ''
+        };
     default:
         return state;
     }
@@ -88,6 +97,7 @@ export {
     SET_ERROR,
     CLEAR_CHAT,
     SAVE_CONFIG,
+    SET_STREAMING,
     persistConfig,
     persistHistory,
     loadConfig,
@@ -117,4 +127,8 @@ export function clearChat () {
 
 export function saveConfig (config) {
     return { type: SAVE_CONFIG, config };
+}
+
+export function setStreaming (text, reasoning) {
+    return { type: SET_STREAMING, text, reasoning };
 }

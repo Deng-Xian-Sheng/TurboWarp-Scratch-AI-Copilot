@@ -80,6 +80,7 @@ const AiPanel = ({
     const [input, setInput] = useState('');
     const [showConfig, setShowConfig] = useState(false);
     const [tempConfig, setTempConfig] = useState({...config});
+    const [expandedReasoning, setExpandedReasoning] = useState({});
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
 
@@ -127,13 +128,45 @@ const AiPanel = ({
         }
     };
 
-    const renderMessageContent = (msg) => {
+    const renderMessageContent = (msg, msgIndex) => {
         if (msg.role === 'user') {
             return msg.content;
         }
 
+        const formatMsg = (content) => {
+            try {
+                return { __html: simpleMarkdown(content || '') };
+            } catch {
+                return { __html: content || '' };
+            }
+        };
+
         // Assistant message with markdown
         const parts = [];
+
+        // Chain of thought (reasoning) - collapsible
+        if (msg.reasoning) {
+            const isExpanded = expandedReasoning[msgIndex] === true;
+            parts.push(
+                React.createElement('div', { key: 'reasoning', className: styles.reasoningBlock },
+                    React.createElement('button', {
+                        className: styles.reasoningToggle,
+                        onClick: () => setExpandedReasoning(prev => ({ ...prev, [msgIndex]: !prev[msgIndex] }))
+                    },
+                        React.createElement('svg', {
+                            width: '12', height: '12', viewBox: '0 0 12 12', fill: 'currentColor',
+                            style: { transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }
+                        },
+                            React.createElement('path', {
+                                d: 'M4 2l4 4-4 4', stroke: 'currentColor', strokeWidth: '1.5', fill: 'none'
+                            })
+                        ),
+                        ' Thinking'
+                    ),
+                    isExpanded && React.createElement('div', { className: styles.reasoningText }, msg.reasoning)
+                )
+            );
+        }
 
         // If there's a displayText (which may be the explanation from tool call)
         if (msg.displayText) {
@@ -141,8 +174,17 @@ const AiPanel = ({
                 <div
                     key="text"
                     className={styles.messageText}
-                    dangerouslySetInnerHTML={formatMessage(msg.displayText)}
+                    dangerouslySetInnerHTML={formatMsg(msg.displayText)}
                 />
+            );
+        }
+
+        // Streaming indicator
+        if (msg.streaming && !msg.displayText && !msg.reasoning) {
+            parts.push(
+                <div key="streaming" className={styles.streamingIndicator}>
+                    <div className={styles.spinner} />
+                </div>
             );
         }
 
@@ -282,13 +324,13 @@ const AiPanel = ({
                             type="text"
                             value={tempConfig.baseUrl}
                             onChange={e => handleConfigChange('baseUrl', e.target.value)}
-                            placeholder="https://coding.dashscope.aliyuncs.com/v1"
+                            placeholder="https://gen.pollinations.ai/v1/chat/completions"
                         />
                     </div>
                     <div className={styles.aiConfigField}>
                         <label>
                             <FormattedMessage
-                                defaultMessage="API Key"
+                                defaultMessage="API Key (optional)"
                                 description="Label for API key config"
                                 id="gui.aiPanel.apiKey"
                             />
@@ -297,7 +339,7 @@ const AiPanel = ({
                             type="password"
                             value={tempConfig.apiKey}
                             onChange={e => handleConfigChange('apiKey', e.target.value)}
-                            placeholder="sk-..."
+                            placeholder="sk-... (optional)"
                         />
                     </div>
                     <div className={styles.aiConfigField}>
@@ -312,7 +354,7 @@ const AiPanel = ({
                             type="text"
                             value={tempConfig.model}
                             onChange={e => handleConfigChange('model', e.target.value)}
-                            placeholder="qwen3.6-plus"
+                            placeholder="openai"
                         />
                     </div>
                     <div className={styles.aiConfigActions}>
@@ -368,7 +410,7 @@ const AiPanel = ({
                             msg.role === 'user' ? styles.messageUser : styles.messageAi
                         )}
                     >
-                        {renderMessageContent(msg)}
+                        {renderMessageContent(msg, index)}
                     </div>
                 ))}
 
