@@ -22,6 +22,7 @@ import {
 
 import log from './log';
 import storage from './storage';
+import {loadProject as loadProjectFromLocal, clearProject as clearProjectLocal} from './local-storage-project';
 
 import VM from 'scratch-vm';
 import {fetchProjectMeta} from './tw-project-meta-fetcher-hoc.jsx';
@@ -110,29 +111,40 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             let projectUrl = typeof URLSearchParams === 'undefined' ?
                 null :
                 new URLSearchParams(location.search).get('project_url');
-            if (projectUrl) {
-                if (
-                    !projectUrl.startsWith('http:') &&
-                    !projectUrl.startsWith('https:') &&
-                    !projectUrl.startsWith('data:')
-                ) {
-                    projectUrl = `https://${projectUrl}`;
+
+            // TW: Load from localStorage for new projects (projectId '0')
+            if (!projectUrl && (projectId === '0' || projectId === 0)) {
+                const localProject = loadProjectFromLocal();
+                if (localProject) {
+                    assetPromise = Promise.resolve({data: localProject});
                 }
-                assetPromise = fetch(projectUrl)
-                    .then(r => {
-                        if (!r.ok) {
-                            throw new Error(`Request returned status ${r.status}`);
-                        }
-                        return r.arrayBuffer();
-                    })
-                    .then(buffer => ({data: buffer}));
-            } else {
-                // TW: Temporary hack for project tokens
-                assetPromise = fetchProjectToken(projectId)
-                    .then(token => {
-                        storage.setProjectToken(token);
-                        return storage.load(storage.AssetType.Project, projectId, storage.DataFormat.JSON);
-                    });
+            }
+
+            if (!assetPromise) {
+                if (projectUrl) {
+                    if (
+                        !projectUrl.startsWith('http:') &&
+                        !projectUrl.startsWith('https:') &&
+                        !projectUrl.startsWith('data:')
+                    ) {
+                        projectUrl = `https://${projectUrl}`;
+                    }
+                    assetPromise = fetch(projectUrl)
+                        .then(r => {
+                            if (!r.ok) {
+                                throw new Error(`Request returned status ${r.status}`);
+                            }
+                            return r.arrayBuffer();
+                        })
+                        .then(buffer => ({data: buffer}));
+                } else {
+                    // TW: Temporary hack for project tokens
+                    assetPromise = fetchProjectToken(projectId)
+                        .then(token => {
+                            storage.setProjectToken(token);
+                            return storage.load(storage.AssetType.Project, projectId, storage.DataFormat.JSON);
+                        });
+                }
             }
 
             return assetPromise

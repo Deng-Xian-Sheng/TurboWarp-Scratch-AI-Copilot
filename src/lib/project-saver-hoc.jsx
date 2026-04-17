@@ -9,6 +9,7 @@ import log from '../lib/log';
 import storage from '../lib/storage';
 import dataURItoBlob from '../lib/data-uri-to-blob';
 import saveProjectToServer from '../lib/save-project-to-server';
+import {saveProject as saveProjectToLocal, clearProject as clearProjectLocal} from '../lib/local-storage-project';
 
 import {
     showAlertWithTimeout,
@@ -169,6 +170,8 @@ const ProjectSaverHOC = function (WrappedComponent) {
                 });
         }
         createNewProjectToStorage () {
+            // Clear localStorage so next load starts with the default project
+            clearProjectLocal();
             return this.storeProject(null)
                 .then(response => {
                     this.props.onCreatedProject(response.id.toString(), this.props.loadingState);
@@ -226,6 +229,8 @@ const ProjectSaverHOC = function (WrappedComponent) {
             // serialized project refers to a newer asset than what
             // we just finished saving).
             const savedVMState = this.props.vm.toJSON();
+            // Also save to localStorage for offline persistence
+            saveProjectToLocal(savedVMState);
             return Promise.all(this.props.vm.assets
                 .filter(asset => !asset.clean)
                 .map(
