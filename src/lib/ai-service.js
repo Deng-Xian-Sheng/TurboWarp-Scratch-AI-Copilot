@@ -101,20 +101,19 @@ export async function chat (messages, config) {
         ...messages
     ];
 
-    let baseUrl;
+    let fetchUrl;
     if (process.env.NODE_ENV !== 'production' && config.baseUrl === 'https://coding.dashscope.aliyuncs.com/v1') {
         // Development: use webpack dev server proxy
-        baseUrl = '/api/ai';
-    } else if (config.baseUrl === 'https://coding.dashscope.aliyuncs.com/v1' ||
-               config.baseUrl === 'https://dashscope.aliyuncs.com/compatible-mode/v1') {
-        // Production DashScope: use compatible-mode endpoint which supports CORS
-        baseUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+        fetchUrl = `${config.baseUrl}/chat/completions`;
     } else {
-        baseUrl = config.baseUrl;
+        // Production: use CORS proxy to bypass CORS restrictions
+        const targetUrl = `${config.baseUrl}/chat/completions`;
+        fetchUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
     }
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const response = await fetch(fetchUrl, {
         method: 'POST',
+        cache: 'no-store',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${config.apiKey}`
