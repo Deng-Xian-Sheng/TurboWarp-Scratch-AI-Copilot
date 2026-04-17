@@ -101,10 +101,17 @@ export async function chat (messages, config) {
         ...messages
     ];
 
-    // Use proxy in development to avoid CORS issues
-    const baseUrl = (process.env.NODE_ENV !== 'production' && config.baseUrl === 'https://coding.dashscope.aliyuncs.com/v1')
-        ? '/api/ai'
-        : config.baseUrl;
+    let baseUrl;
+    if (process.env.NODE_ENV !== 'production' && config.baseUrl === 'https://coding.dashscope.aliyuncs.com/v1') {
+        // Development: use webpack dev server proxy
+        baseUrl = '/api/ai';
+    } else if (config.baseUrl === 'https://coding.dashscope.aliyuncs.com/v1' ||
+               config.baseUrl === 'https://dashscope.aliyuncs.com/compatible-mode/v1') {
+        // Production DashScope: use compatible-mode endpoint which supports CORS
+        baseUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    } else {
+        baseUrl = config.baseUrl;
+    }
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
