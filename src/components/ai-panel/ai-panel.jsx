@@ -419,12 +419,17 @@ const AiPanel = ({
 
                 {loading && (
                     <div className={classNames(styles.message, styles.messageAi)}>
-                        {renderMessageContent({
-                            role: 'assistant',
-                            displayText: streamingText,
-                            reasoning: streamingReasoning,
-                            streaming: true
-                        }, -1)}
+                        {streamingReasoning && (
+                            <div className={styles.reasoningBlock}>
+                                <div className={styles.reasoningText}>{streamingReasoning}</div>
+                            </div>
+                        )}
+                        {streamingText && (
+                            <div
+                                className={styles.messageText}
+                                dangerouslySetInnerHTML={formatMessage(streamingText)}
+                            />
+                        )}
                         {!streamingText && !streamingReasoning && (
                             <div className={styles.streamingIndicator}>
                                 <div className={styles.spinner} />

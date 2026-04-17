@@ -209,10 +209,11 @@ export async function chat (messages, config, options = {}) {
 
                     // Streaming callback
                     if (options.onChunk) {
+                        log.info('[AI SSE] text:', fullText.length, 'reasoning:', reasoning.length);
                         options.onChunk(fullText, reasoning);
                     }
-                } catch (parseErr) {
-                    // skip malformed SSE lines
+                } catch (e) {
+                    // JSON parse error, skip this chunk
                 }
             }
         }
