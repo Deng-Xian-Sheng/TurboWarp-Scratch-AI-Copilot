@@ -110,6 +110,12 @@ export async function chat (messages, config, options = {}) {
     const model = (config && config.model) || DEFAULT_MODEL;
     const apiKey = (config && config.apiKey) || '';
 
+    // Ensure URL ends with /chat/completions (OpenAI-compatible endpoint)
+    let fetchUrl = baseUrl;
+    if (!fetchUrl.includes('/chat/completions')) {
+        fetchUrl = fetchUrl.replace(/\/+$/, '') + '/chat/completions';
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -121,7 +127,7 @@ export async function chat (messages, config, options = {}) {
     }
 
     try {
-        const response = await fetch(baseUrl, {
+        const response = await fetch(fetchUrl, {
             method: 'POST',
             cache: 'no-store',
             headers,

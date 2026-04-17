@@ -146,7 +146,8 @@ const AiPanel = ({
 
         // Chain of thought (reasoning) - collapsible
         if (msg.reasoning) {
-            const isExpanded = expandedReasoning[msgIndex] === true;
+            // Auto-expand during streaming
+            const isExpanded = msg.streaming ? true : (expandedReasoning[msgIndex] === true);
             parts.push(
                 React.createElement('div', { key: 'reasoning', className: styles.reasoningBlock },
                     React.createElement('button', {
@@ -161,7 +162,7 @@ const AiPanel = ({
                                 d: 'M4 2l4 4-4 4', stroke: 'currentColor', strokeWidth: '1.5', fill: 'none'
                             })
                         ),
-                        ' Thinking'
+                        msg.streaming ? 'Thinking...' : 'Thinking'
                     ),
                     isExpanded && React.createElement('div', { className: styles.reasoningText }, msg.reasoning)
                 )
