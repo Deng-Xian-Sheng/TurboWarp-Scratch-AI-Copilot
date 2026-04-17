@@ -7,7 +7,7 @@ import AiPanelComponent from '../components/ai-panel/ai-panel.jsx';
 import {chat, deleteAllBlocks} from '../lib/ai-service.js';
 import {
     setMessages, setLoading, setError, clearChat, toggleAiPanel,
-    saveConfig, loadConfig, loadHistory, setStreaming
+    saveConfig, loadConfig, loadHistory
 } from '../reducers/ai-panel.js';
 import {getWorkspace} from '../lib/workspace-registry.js';
 import log from '../lib/log.js';
@@ -22,32 +22,27 @@ class AiPanel extends React.Component {
             'handleClose',
             'handleConfigSave'
         ]);
+        this.state = {
+            streamingText: '',
+            streamingReasoning: ''
+        };
     }
 
     async handleSendMessage (message) {
-        const {messages, config, onSetLoading, onSetMessages, onSetError, onSetStreaming} = this.props;
+        const {messages, config, onSetLoading, onSetMessages, onSetError} = this.props;
 
         // Build user message
         const userMessage = { role: 'user', content: message };
         const updatedMessages = [...messages, userMessage];
 
-        // Add user message immediately (with displayText for rendering)
+        // Add user message immediately
         onSetMessages(updatedMessages.map(m => ({
             ...m,
             displayText: m.content
         })));
 
         onSetLoading(true);
-
-        // Add a streaming assistant message placeholder
-        const streamingIndex = updatedMessages.length;
-        onSetMessages([...updatedMessages, {
-            role: 'assistant',
-            content: '',
-            displayText: '',
-            reasoning: '',
-            streaming: true
-        }]);
+        this.setState({ streamingText: '', streamingReasoning: '' });
 
         try {
             // Build API messages (strip display-only fields)
@@ -58,23 +53,10 @@ class AiPanel extends React.Component {
                 return apiMsg;
             });
 
-            let currentText = '';
-            let currentReasoning = '';
-
             // Call the API with streaming
             const result = await chat(apiMessages, config, {
                 onChunk: (text, reasoning) => {
-                    currentText = text;
-                    currentReasoning = reasoning;
-                    // Update the streaming message in place
-                    const msgs = [...updatedMessages, {
-                        role: 'assistant',
-                        content: text,
-                        displayText: text,
-                        reasoning: reasoning,
-                        streaming: true
-                    }];
-                    onSetMessages(msgs);
+                    this.setState({ streamingText: text, streamingReasoning: reasoning });
                 }
             });
 
@@ -85,8 +67,7 @@ class AiPanel extends React.Component {
                 displayText: result.text,
                 reasoning: result.reasoning,
                 xmlBlocks: result.xmlBlocks,
-                toolUsed: result.toolUsed,
-                streaming: false
+                toolUsed: result.toolUsed
             };
 
             // If the model used insertScratchBlocks tool, inject blocks automatically
@@ -97,12 +78,11 @@ class AiPanel extends React.Component {
             }
 
             onSetMessages([...updatedMessages, assistantMessage]);
-            onSetStreaming('', '');
         } catch (err) {
             onSetError(err.message || 'Failed to get AI response');
-            onSetStreaming('', '');
         } finally {
             onSetLoading(false);
+            this.setState({ streamingText: '', streamingReasoning: '' });
         }
     }
 
@@ -178,12 +158,15 @@ class AiPanel extends React.Component {
 
     render () {
         const { messages, loading, error, config } = this.props;
+        const { streamingText, streamingReasoning } = this.state;
         return (
             <AiPanelComponent
                 config={config}
                 error={error}
                 loading={loading}
                 messages={messages}
+                streamingText={streamingText}
+                streamingReasoning={streamingReasoning}
                 onClearChat={this.handleClearChat}
                 onClose={this.handleClose}
                 onConfigSave={this.handleConfigSave}
@@ -222,7 +205,6 @@ const mapDispatchToProps = dispatch => ({
     onSetMessages: messages => dispatch(setMessages(messages)),
     onSetLoading: loading => dispatch(setLoading(loading)),
     onSetError: error => dispatch(setError(error)),
-    onSetStreaming: (text, reasoning) => dispatch(setStreaming(text, reasoning)),
     onClearChat: () => dispatch(clearChat()),
     onClose: () => dispatch(toggleAiPanel()),
     onSaveConfig: config => dispatch(saveConfig(config))

@@ -70,6 +70,8 @@ const AiPanel = ({
     loading,
     error,
     config,
+    streamingText,
+    streamingReasoning,
     onSendMessage,
     onClearChat,
     onClose,
@@ -144,29 +146,38 @@ const AiPanel = ({
         // Assistant message with markdown
         const parts = [];
 
-        // Chain of thought (reasoning) - collapsible
+        // Chain of thought (reasoning) - collapsible for final, inline for streaming
         if (msg.reasoning) {
-            // Auto-expand during streaming
-            const isExpanded = msg.streaming ? true : (expandedReasoning[msgIndex] === true);
-            parts.push(
-                React.createElement('div', { key: 'reasoning', className: styles.reasoningBlock },
-                    React.createElement('button', {
-                        className: styles.reasoningToggle,
-                        onClick: () => setExpandedReasoning(prev => ({ ...prev, [msgIndex]: !prev[msgIndex] }))
-                    },
-                        React.createElement('svg', {
-                            width: '12', height: '12', viewBox: '0 0 12 12', fill: 'currentColor',
-                            style: { transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }
+            if (msg.streaming) {
+                // During streaming: show reasoning directly without toggle
+                parts.push(
+                    React.createElement('div', { key: 'reasoning', className: styles.reasoningBlock },
+                        React.createElement('div', { className: styles.reasoningText }, msg.reasoning)
+                    )
+                );
+            } else {
+                // Final message: collapsible
+                const isExpanded = expandedReasoning[msgIndex] === true;
+                parts.push(
+                    React.createElement('div', { key: 'reasoning', className: styles.reasoningBlock },
+                        React.createElement('button', {
+                            className: styles.reasoningToggle,
+                            onClick: () => setExpandedReasoning(prev => ({ ...prev, [msgIndex]: !prev[msgIndex] }))
                         },
-                            React.createElement('path', {
-                                d: 'M4 2l4 4-4 4', stroke: 'currentColor', strokeWidth: '1.5', fill: 'none'
-                            })
+                            React.createElement('svg', {
+                                width: '12', height: '12', viewBox: '0 0 12 12', fill: 'currentColor',
+                                style: { transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }
+                            },
+                                React.createElement('path', {
+                                    d: 'M4 2l4 4-4 4', stroke: 'currentColor', strokeWidth: '1.5', fill: 'none'
+                                })
+                            ),
+                            'Thinking'
                         ),
-                        msg.streaming ? 'Thinking...' : 'Thinking'
-                    ),
-                    isExpanded && React.createElement('div', { className: styles.reasoningText }, msg.reasoning)
-                )
-            );
+                        isExpanded && React.createElement('div', { className: styles.reasoningText }, msg.reasoning)
+                    )
+                );
+            }
         }
 
         // If there's a displayText (which may be the explanation from tool call)
@@ -177,15 +188,6 @@ const AiPanel = ({
                     className={styles.messageText}
                     dangerouslySetInnerHTML={formatMsg(msg.displayText)}
                 />
-            );
-        }
-
-        // Streaming indicator
-        if (msg.streaming && !msg.displayText && !msg.reasoning) {
-            parts.push(
-                <div key="streaming" className={styles.streamingIndicator}>
-                    <div className={styles.spinner} />
-                </div>
             );
         }
 
@@ -416,13 +418,18 @@ const AiPanel = ({
                 ))}
 
                 {loading && (
-                    <div className={styles.loadingIndicator}>
-                        <div className={styles.spinner} />
-                        <FormattedMessage
-                            defaultMessage="Thinking..."
-                            description="AI loading message"
-                            id="gui.aiPanel.loading"
-                        />
+                    <div className={classNames(styles.message, styles.messageAi)}>
+                        {renderMessageContent({
+                            role: 'assistant',
+                            displayText: streamingText,
+                            reasoning: streamingReasoning,
+                            streaming: true
+                        }, -1)}
+                        {!streamingText && !streamingReasoning && (
+                            <div className={styles.streamingIndicator}>
+                                <div className={styles.spinner} />
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -480,6 +487,8 @@ AiPanel.propTypes = {
     }),
     error: PropTypes.string,
     loading: PropTypes.bool,
+    streamingText: PropTypes.string,
+    streamingReasoning: PropTypes.string,
     messages: PropTypes.arrayOf(
         PropTypes.shape({
             role: PropTypes.oneOf(['user', 'assistant', 'tool']).isRequired,
