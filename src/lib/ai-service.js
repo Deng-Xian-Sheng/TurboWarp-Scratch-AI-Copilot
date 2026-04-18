@@ -172,6 +172,7 @@ export async function chat (messages, config, options = {}) {
                 if (!line.startsWith('data: ')) continue;
                 const data = line.slice(6).trim();
                 if (data === '[DONE]') continue;
+                if (!data) continue;
 
                 try {
                     const parsed = JSON.parse(data);
@@ -207,10 +208,11 @@ export async function chat (messages, config, options = {}) {
                         }
                     }
 
-                    // Streaming callback
+                    // Streaming callback — wrap in setTimeout to break React's
+                    // batched update cycle (Promise callbacks are grouped into
+                    // microtasks that React batches into a single render)
                     if (options.onChunk) {
-                        log.info('[AI SSE] text:', fullText.length, 'reasoning:', reasoning.length);
-                        options.onChunk(fullText, reasoning);
+                        setTimeout(() => options.onChunk(fullText, reasoning), 0);
                     }
                 } catch (e) {
                     // JSON parse error, skip this chunk

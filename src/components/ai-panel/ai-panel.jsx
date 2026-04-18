@@ -130,6 +130,15 @@ const AiPanel = ({
         }
     };
 
+    /**
+     * Remove redundant thinking/reasoning labels from the start of reasoning text.
+     * Models like qwen often include "Thinking Process:" or similar headers.
+     */
+    const cleanReasoningText = (text) => {
+        if (!text) return '';
+        return text.replace(/^(Thinking Process:?|Thought Process:?|Reasoning:?|Analysis:?|思考过程:?|推理:?)[\s\n]*/i, '');
+    };
+
     const renderMessageContent = (msg, msgIndex) => {
         if (msg.role === 'user') {
             return msg.content;
@@ -421,7 +430,10 @@ const AiPanel = ({
                     <div className={classNames(styles.message, styles.messageAi)}>
                         {streamingReasoning && (
                             <div className={styles.reasoningBlock}>
-                                <div className={styles.reasoningText}>{streamingReasoning}</div>
+                                <div className={classNames(styles.reasoningText, styles.streamingReasoning)}>
+                                    <span className={styles.thinkingLabel}>Thinking</span>
+                                    {cleanReasoningText(streamingReasoning)}
+                                </div>
                             </div>
                         )}
                         {streamingText && (

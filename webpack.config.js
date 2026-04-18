@@ -35,9 +35,10 @@ const base = {
         contentBase: path.resolve(__dirname, 'build'),
         host: '0.0.0.0',
         disableHostCheck: true,
-        compress: true,
+        compress: false,
         port: process.env.PORT || 8601,
         // Proxy AI API requests to bypass CORS during development
+        // Using http-proxy for proper SSE streaming support
         before(app, server) {
             const https = require('https');
 
@@ -46,7 +47,7 @@ const base = {
                 res.redirect('/editor.html');
             });
 
-            // Raw HTTPS proxy for AI API - forwards request body directly via pipe
+            // SSE-compatible proxy for AI API
             app.all('/api/ai/*', (req, res) => {
                 const pathPart = req.originalUrl.replace(/^\/api\/ai\//, '').split('?')[0];
                 try {

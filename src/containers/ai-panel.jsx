@@ -56,10 +56,7 @@ class AiPanel extends React.Component {
             // Call the API with streaming
             const result = await chat(apiMessages, config, {
                 onChunk: (text, reasoning) => {
-                    // Use setTimeout to ensure React processes each update in its own tick
-                    setTimeout(() => {
-                        this.setState({ streamingText: text, streamingReasoning: reasoning });
-                    }, 0);
+                    this.setState({ streamingText: text, streamingReasoning: reasoning });
                 }
             });
 
