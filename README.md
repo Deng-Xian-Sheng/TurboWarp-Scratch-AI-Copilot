@@ -1,5 +1,11 @@
 scratch-gui modified for use in [TurboWarp](https://turbowarp.org/)
 
+## AI Assistant
+
+Built-in AI coding assistant that helps users create Scratch projects through natural language. Describe what you want to build and the AI will generate and insert Scratch blocks directly onto the canvas.
+
+![AI Assistant](docs/ai-assistant.png)
+
 ## Setup
 
 See https://docs.turbowarp.org/development/getting-started to setup the complete TurboWarp environment.
