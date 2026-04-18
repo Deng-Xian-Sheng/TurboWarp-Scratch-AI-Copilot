@@ -1,2 +1,236 @@
-(window.webpackJsonpGUI=window.webpackJsonpGUI||[]).push([[9],{1575:function(t,e,n){"use strict";n.r(e),n.d(e,"resources",(function(){return o}));const o={"userscript.js":async function(t){let{addon:e,console:n,msg:o}=t;const l=await e.tab.traps.getBlockly();function a(){let t=document.createElement("style");t.textContent="\n    .blocklyText {\n        fill: ".concat(l.Colours.text,';\n        font-family: "Helvetica Neue", Helvetica, sans-serif;\n        font-size: 12pt;\n        font-weight: 500;\n    }\n    .blocklyNonEditableText>text, .blocklyEditableText>text {\n        fill: ').concat(l.Colours.textFieldText,";\n    }\n    .blocklyDropdownText {\n        fill: ").concat(l.Colours.text," !important;\n    }\n    ");for(let e of document.querySelectorAll(".scratch-addons-style[data-addons*='editor-theme3']"))e.disabled||(t.textContent+=e.textContent);return t}function c(t){for(let e of document.documentElement.style)e.startsWith("--editorTheme3-")&&t.style.setProperty(e,document.documentElement.style.getPropertyValue(e))}let r=document.createElementNS("http://www.w3.org/2000/svg","svg");async function i(t,e){let n;n=e?function(t,e){let n=r.cloneNode(),o=e.svgGroup_;o=o.cloneNode(!0);let l=o.getAttribute("data-shapes"),i=0;const s=t?2:1;"c-block c-1 hat"===l&&(i=20);"hat"===l&&(i=16,e.CAT_BLOCKS&&(i+=16));return o.setAttribute("transform","translate(0,".concat(s*i,") scale(").concat(s,")")),c(n),n.append(a()),n.append(o),n}(t,e):function(t){let e=r.cloneNode(),n=document.querySelector("svg.blocklySvg g.blocklyBlockCanvas");n=n.cloneNode(!0);let o=[],l=[];return n.childNodes.forEach((e=>{let n=e.getAttribute("transform").match(/translate\((.*?),(.*?)\)/)[1]||0,a=e.getAttribute("transform").match(/translate\((.*?),(.*?)\)/)[2]||0;o.push(n*(t?2:1)),l.push(a*(t?2:1)),e.style.display=""})),n.setAttribute("transform","translate(".concat(-Math.min(...o),",").concat(-Math.min(...l)+18*(t?2:1),") ").concat(t?"scale(2)":"")),c(e),e.append(a()),e.append(n),e}(t),n.querySelectorAll("text").forEach((t=>{t.innerHTML=t.innerHTML.replace(/&nbsp;/g," ")})),await Promise.all(Array.from(n.querySelectorAll("image")).map((async t=>{const e=t.getAttribute("xlink:href");if(e.startsWith("data:"))return;const n=await(await fetch(e)).blob(),o=new FileReader,l=await new Promise((t=>{o.addEventListener("load",(()=>t(o.result))),o.readAsDataURL(n)}));t.setAttribute("xlink:href",l)}))),t?function(t){const e=new XMLSerializer,n=document.createElement("iframe");document.body.append(n),n.contentDocument.write(e.serializeToString(t));let{width:o,height:l}=n.contentDocument.body.querySelector("svg g").getBoundingClientRect();t.setAttribute("width",o+"px"),t.setAttribute("height",l+"px");let a=document.createElement("canvas"),c=a.getContext("2d"),r=document.createElement("img");r.setAttribute("src","data:image/svg+xml;base64,"+btoa(unescape(encodeURIComponent(e.serializeToString(t))))),r.onload=function(){a.height=r.height,a.width=r.width,c.drawImage(r,0,0,r.width,r.height);let t=a.toDataURL("image/png"),e=document.createElement("a");const o=new Date,l="".concat(o.toLocaleDateString(),"-").concat(o.toLocaleTimeString());e.download="block_".concat(l,".png"),e.href=t,e.click(),n.remove()}}(n):function(t){const e=document.createElement("a");document.body.appendChild(e);const n=new Blob([t],{type:"text"}),o=window.URL.createObjectURL(n);e.href=o;const l=new Date,a="".concat(l.toLocaleDateString(),"-").concat(l.toLocaleTimeString());e.download="block_".concat(a,".svg"),e.click(),window.URL.revokeObjectURL(o),document.body.removeChild(e)}((new XMLSerializer).serializeToString(n))}r.setAttribute("xmlns:html","http://www.w3.org/1999/xhtml"),r.setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink"),r.setAttribute("version","1.1"),e.tab.createBlockContextMenu((t=>{var n,l;if(e.self.disabled)return t;let a=document.querySelector("svg.blocklySvg g.blocklyBlockCanvas");const c=t.findIndex((t=>t._isDevtoolsFirstItem)),r=-1!==c?c:t.length;return t.splice(r,0,{enabled:!(null==a||null===(n=a.childNodes)||void 0===n||!n.length),text:o("export_all_to_SVG"),callback:()=>{i(!1)},separator:!0},{enabled:!(null==a||null===(l=a.childNodes)||void 0===l||!l.length),text:o("export_all_to_PNG"),callback:()=>{i(!0)},separator:!1}),t}),{workspace:!0}),e.tab.createBlockContextMenu(((t,n)=>{if(e.self.disabled)return t;const l=t.findIndex((t=>t._isDevtoolsFirstItem)),a=-1!==l?l:t.length;return t.splice(a,0,{enabled:!0,text:o("export_selected_to_SVG"),callback:()=>{i(!1,n)},separator:!0},{enabled:!0,text:o("export_selected_to_PNG"),callback:()=>{i(!0,n)},separator:!1}),t}),{blocks:!0})}}}}]);
+(window["webpackJsonpGUI"] = window["webpackJsonpGUI"] || []).push([["addon-entry-blocks2image"],{
+
+/***/ "./src/addons/addons/blocks2image/_runtime_entry.js":
+/*!**********************************************************!*\
+  !*** ./src/addons/addons/blocks2image/_runtime_entry.js ***!
+  \**********************************************************/
+/*! exports provided: resources */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "resources", function() { return resources; });
+/* harmony import */ var _userscript_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./userscript.js */ "./src/addons/addons/blocks2image/userscript.js");
+/* generated by pull.js */
+
+const resources = {
+  "userscript.js": _userscript_js__WEBPACK_IMPORTED_MODULE_0__["default"]
+};
+
+/***/ }),
+
+/***/ "./src/addons/addons/blocks2image/userscript.js":
+/*!******************************************************!*\
+  !*** ./src/addons/addons/blocks2image/userscript.js ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (async function (_ref) {
+  let {
+    addon,
+    console,
+    msg
+  } = _ref;
+  const Blockly = await addon.tab.traps.getBlockly();
+  function makeStyle() {
+    let style = document.createElement("style");
+    style.textContent = "\n    .blocklyText {\n        fill: ".concat(Blockly.Colours.text, ";\n        font-family: \"Helvetica Neue\", Helvetica, sans-serif;\n        font-size: 12pt;\n        font-weight: 500;\n    }\n    .blocklyNonEditableText>text, .blocklyEditableText>text {\n        fill: ").concat(Blockly.Colours.textFieldText, ";\n    }\n    .blocklyDropdownText {\n        fill: ").concat(Blockly.Colours.text, " !important;\n    }\n    ");
+    for (let userstyle of document.querySelectorAll(".scratch-addons-style[data-addons*='editor-theme3']")) {
+      if (userstyle.disabled) continue;
+      style.textContent += userstyle.textContent;
+    }
+    return style;
+  }
+  function setCSSVars(element) {
+    for (let property of document.documentElement.style) {
+      if (property.startsWith("--editorTheme3-")) element.style.setProperty(property, document.documentElement.style.getPropertyValue(property));
+    }
+  }
+  let exSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  exSVG.setAttribute("xmlns:html", "http://www.w3.org/1999/xhtml");
+  exSVG.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+  exSVG.setAttribute("version", "1.1");
+  addon.tab.createBlockContextMenu(items => {
+    var _svgchild$childNodes, _svgchild$childNodes2;
+    if (addon.self.disabled) return items;
+    let svgchild = document.querySelector("svg.blocklySvg g.blocklyBlockCanvas");
+    const pasteItemIndex = items.findIndex(obj => obj._isDevtoolsFirstItem);
+    const insertBeforeIndex = pasteItemIndex !== -1 ?
+    // If "paste" button exists, add own items before it
+    pasteItemIndex :
+    // If there's no such button, insert at end
+    items.length;
+    items.splice(insertBeforeIndex, 0, {
+      enabled: !!(svgchild !== null && svgchild !== void 0 && (_svgchild$childNodes = svgchild.childNodes) !== null && _svgchild$childNodes !== void 0 && _svgchild$childNodes.length),
+      text: msg("export_all_to_SVG"),
+      callback: () => {
+        exportBlock(false);
+      },
+      separator: true
+    }, {
+      enabled: !!(svgchild !== null && svgchild !== void 0 && (_svgchild$childNodes2 = svgchild.childNodes) !== null && _svgchild$childNodes2 !== void 0 && _svgchild$childNodes2.length),
+      text: msg("export_all_to_PNG"),
+      callback: () => {
+        exportBlock(true);
+      },
+      separator: false
+    });
+    return items;
+  }, {
+    workspace: true
+  });
+  addon.tab.createBlockContextMenu((items, block) => {
+    if (addon.self.disabled) return items;
+    const makeSpaceItemIndex = items.findIndex(obj => obj._isDevtoolsFirstItem);
+    const insertBeforeIndex = makeSpaceItemIndex !== -1 ?
+    // If "make space" button exists, add own items before it
+    makeSpaceItemIndex :
+    // If there's no such button, insert at end
+    items.length;
+    items.splice(insertBeforeIndex, 0, {
+      enabled: true,
+      text: msg("export_selected_to_SVG"),
+      callback: () => {
+        exportBlock(false, block);
+      },
+      separator: true
+    }, {
+      enabled: true,
+      text: msg("export_selected_to_PNG"),
+      callback: () => {
+        exportBlock(true, block);
+      },
+      separator: false
+    });
+    return items;
+  }, {
+    blocks: true
+  });
+  async function exportBlock(isExportPNG, block) {
+    let svg;
+    if (block) {
+      svg = selectedBlocks(isExportPNG, block);
+    } else {
+      svg = allBlocks(isExportPNG);
+    }
+    // resolve nbsp whitespace
+    svg.querySelectorAll("text").forEach(text => {
+      text.innerHTML = text.innerHTML.replace(/&nbsp;/g, " ");
+    });
+
+    // replace external images with data URIs
+    await Promise.all(Array.from(svg.querySelectorAll("image")).map(async item => {
+      const iconUrl = item.getAttribute("xlink:href");
+      if (iconUrl.startsWith("data:")) return;
+      const blob = await (await fetch(iconUrl)).blob();
+      const reader = new FileReader();
+      const dataUri = await new Promise(resolve => {
+        reader.addEventListener("load", () => resolve(reader.result));
+        reader.readAsDataURL(blob);
+      });
+      item.setAttribute("xlink:href", dataUri);
+    }));
+    if (!isExportPNG) {
+      exportData(new XMLSerializer().serializeToString(svg));
+    } else {
+      exportPNG(svg);
+    }
+  }
+  function selectedBlocks(isExportPNG, block) {
+    let svg = exSVG.cloneNode();
+    let svgchild = block.svgGroup_;
+    svgchild = svgchild.cloneNode(true);
+    let dataShapes = svgchild.getAttribute("data-shapes");
+    let translateY = 0; // blocks no hat
+    const scale = isExportPNG ? 2 : 1;
+    if (dataShapes === "c-block c-1 hat") {
+      translateY = 20; // for My block
+    }
+    if (dataShapes === "hat") {
+      translateY = 16; // for Events
+      if (block.CAT_BLOCKS) {
+        translateY += 16; // for cat ears
+      }
+    }
+    svgchild.setAttribute("transform", "translate(0,".concat(scale * translateY, ") scale(").concat(scale, ")"));
+    setCSSVars(svg);
+    svg.append(makeStyle());
+    svg.append(svgchild);
+    return svg;
+  }
+  function allBlocks(isExportPNG) {
+    let svg = exSVG.cloneNode();
+    let svgchild = document.querySelector("svg.blocklySvg g.blocklyBlockCanvas");
+    svgchild = svgchild.cloneNode(true);
+    let xArr = [];
+    let yArr = [];
+    svgchild.childNodes.forEach(g => {
+      let x = g.getAttribute("transform").match(/translate\((.*?),(.*?)\)/)[1] || 0;
+      let y = g.getAttribute("transform").match(/translate\((.*?),(.*?)\)/)[2] || 0;
+      xArr.push(x * (isExportPNG ? 2 : 1));
+      yArr.push(y * (isExportPNG ? 2 : 1));
+      g.style.display = ""; // because of TW scratch-blocks changes
+    });
+    svgchild.setAttribute("transform", "translate(".concat(-Math.min(...xArr), ",").concat(-Math.min(...yArr) + 18 * (isExportPNG ? 2 : 1), ") ").concat(isExportPNG ? "scale(2)" : ""));
+    setCSSVars(svg);
+    svg.append(makeStyle());
+    svg.append(svgchild);
+    return svg;
+  }
+  function exportData(text) {
+    const saveLink = document.createElement("a");
+    document.body.appendChild(saveLink);
+    const data = new Blob([text], {
+      type: "text"
+    });
+    const url = window.URL.createObjectURL(data);
+    saveLink.href = url;
+
+    // File name: project-DATE-TIME
+    const date = new Date();
+    const timestamp = "".concat(date.toLocaleDateString(), "-").concat(date.toLocaleTimeString());
+    saveLink.download = "block_".concat(timestamp, ".svg");
+    saveLink.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(saveLink);
+  }
+  function exportPNG(svg) {
+    const serializer = new XMLSerializer();
+    const iframe = document.createElement("iframe");
+    // iframe.style.display = "none"
+    document.body.append(iframe);
+    iframe.contentDocument.write(serializer.serializeToString(svg));
+    let {
+      width,
+      height
+    } = iframe.contentDocument.body.querySelector("svg g").getBoundingClientRect();
+    svg.setAttribute("width", width + "px");
+    svg.setAttribute("height", height + "px");
+    let canvas = document.createElement("canvas");
+    let ctx = canvas.getContext("2d");
+    let img = document.createElement("img");
+    img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(serializer.serializeToString(svg)))));
+    img.onload = function () {
+      canvas.height = img.height;
+      canvas.width = img.width;
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+      // Now is done
+      let dataURL = canvas.toDataURL("image/png");
+      let link = document.createElement("a");
+      const date = new Date();
+      const timestamp = "".concat(date.toLocaleDateString(), "-").concat(date.toLocaleTimeString());
+      link.download = "block_".concat(timestamp, ".png");
+      link.href = dataURL;
+      link.click();
+      iframe.remove();
+    };
+  }
+});
+
+/***/ })
+
+}]);
 //# sourceMappingURL=addon-entry-blocks2image.js.map

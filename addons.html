@@ -1,10 +1,26 @@
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Addon Settings - TurboWarp</title><style>body[data-splash-theme="dark"] {
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Addon Settings - TurboWarp</title>
+    <style>
+      body[data-splash-theme="dark"] {
         background: #111;
       }
 
       noscript {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      }</style></head><body><noscript><h1>This page requires JavaScript</h1></noscript><script>(function() {
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <h1>This page requires JavaScript</h1>
+    </noscript>
+
+    <script>
+      (function() {
         var theme = '';
 
         try {
@@ -32,4 +48,9 @@
         }
 
         document.body.setAttribute('data-splash-theme', theme);
-      })();</script><div id="app"></div><script src="js/pentapod/vendors~addon-settings~credits~editor~embed~fullscreen~player.73de3375c781c4d37601.js"></script><script src="js/pentapod/addon-settings~addons~editor~fullscreen~player.4fecf858da8e252010f6.js"></script><script src="js/pentapod/addon-settings~editor~embed~fullscreen~player.429ccb83e9421d99ba4f.js"></script><script src="js/pentapod/addon-settings.ad1016fc26f6f38b678c.js"></script></body></html>
+      })();
+    </script>
+
+    <div id="app"></div>
+  <script src="js/vendors~addon-settings~credits~editor~embed~fullscreen~player.js"></script><script src="js/addon-settings~addons~editor~fullscreen~player.js"></script><script src="js/addon-settings~editor~embed~fullscreen~player.js"></script><script src="js/addon-settings.js"></script></body>
+</html>
