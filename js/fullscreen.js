@@ -37851,7 +37851,7 @@ async function chat(messages, config) {
   }
 
   // In development, proxy all API requests through webpack-dev-server to avoid CORS
-  const isDev = "undefined" !== 'production';
+  var isDev=typeof window!=="undefined"&&(window.location.hostname==="localhost"||window.location.hostname==="127.0.0.1");
   if (isDev) {
     fetchUrl = "/api/ai/".concat(encodeURIComponent(fetchUrl));
   }
