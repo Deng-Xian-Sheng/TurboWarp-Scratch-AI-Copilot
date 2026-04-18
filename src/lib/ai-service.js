@@ -116,8 +116,9 @@ export async function chat (messages, config, options = {}) {
         fetchUrl = fetchUrl.replace(/\/+$/, '') + '/chat/completions';
     }
 
-    // In development, proxy all API requests through webpack-dev-server to avoid CORS
-    const isDev = process.env.NODE_ENV !== 'production';
+    // In development (localhost), proxy all API requests through webpack-dev-server to avoid CORS.
+    // On deployed sites (GitHub Pages, etc.), call the API directly with CORS.
+    const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     if (isDev) {
         fetchUrl = `/api/ai/${encodeURIComponent(fetchUrl)}`;
     }
