@@ -11,6 +11,9 @@ const autoprefixer = require('autoprefixer');
 const postcssVars = require('postcss-simple-vars');
 const postcssImport = require('postcss-import');
 
+// Terser (for single-threaded production builds)
+const TerserPlugin = require('terser-webpack-plugin');
+
 const STATIC_PATH = process.env.STATIC_PATH || '/static';
 const {APP_NAME} = require('./src/lib/brand');
 
@@ -218,7 +221,10 @@ module.exports = [
                 minChunks: 2,
                 minSize: 50000,
                 maxInitialRequests: 5
-            }
+            },
+            minimizer: [
+                new TerserPlugin({ parallel: 1 })
+            ]
         },
         plugins: base.plugins.concat([
             new webpack.DefinePlugin({
